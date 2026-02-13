@@ -17,6 +17,18 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import Autoplay from "embla-carousel-autoplay";
 const countries = ["Australia", "France", "Germany", "Italy", "Netherlands", "New Zealand", "Norway", "UK", "USA", "Argentina", "Austria", "Belgium", "Brazil", "Canada", "Chile", "China", "Denmark", "Finland", "Hong Kong", "India", "Indonesia", "Ireland", "Japan", "Malaysia", "Mexico", "Philippines", "Singapore", "South Africa", "South Korea", "Spain", "Sweden", "Switzerland", "Thailand", "UAE", "Vietnam", "Other"];
+const phoneCountryCodes = [
+  { label: "United States (+1)", value: "+1" },
+  { label: "United Kingdom (+44)", value: "+44" },
+  { label: "Australia (+61)", value: "+61" },
+  { label: "Singapore (+65)", value: "+65" },
+  { label: "Hong Kong (+852)", value: "+852" },
+  { label: "Thailand (+66)", value: "+66" },
+  { label: "UAE (+971)", value: "+971" },
+  { label: "India (+91)", value: "+91" },
+  { label: "Canada (+1)", value: "+1-ca" },
+  { label: "New Zealand (+64)", value: "+64" },
+];
 
 export default function Index() {
   useEffect(() => {
@@ -30,6 +42,19 @@ export default function Index() {
   const [callDate, setCallDate] = useState<Date | undefined>(undefined);
   const [callTime, setCallTime] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phoneCountryCode, setPhoneCountryCode] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
+
+  const isContactInfoComplete = useMemo(
+    () =>
+      name.trim().length > 0 &&
+      email.trim().length > 0 &&
+      phoneCountryCode.trim().length > 0 &&
+      phoneNumber.trim().length > 0,
+    [name, email, phoneCountryCode, phoneNumber]
+  );
 
   // Generate time slots from 08:00 to 20:00 in 30-minute increments
   const timeSlots = useMemo(() => {
@@ -74,12 +99,24 @@ export default function Index() {
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!isContactInfoComplete) {
+      toast({
+        title: "Missing required fields",
+        description: "Please fill in name, email, and phone number before submitting.",
+        variant: "destructive",
+      });
+      return;
+    }
     setIsSubmitting(true);
 
     const formData = new FormData(e.currentTarget);
+    const selectedCountryCode = phoneCountryCode === "+1-ca" ? "+1" : phoneCountryCode;
     const data = {
       name: formData.get('name') as string,
       email: formData.get('email') as string,
+      phoneCountryCode: selectedCountryCode,
+      phoneNumber: formData.get('phoneNumber') as string,
+      phone: `${selectedCountryCode} ${(formData.get('phoneNumber') as string).trim()}`,
       countryOfResidence: formData.get('countryOfResidence') as string,
       countryOfOrigin: formData.get('countryOfOrigin') as string,
       preferredCallDate: callDate?.toISOString() || '',
@@ -107,6 +144,10 @@ export default function Index() {
             description: "We'll be in touch within 24 hours." 
           });
           e.currentTarget.reset();
+          setName("");
+          setEmail("");
+          setPhoneCountryCode("");
+          setPhoneNumber("");
           setCallDate(undefined);
         } else {
           throw new Error(result.message || 'Failed to send');
@@ -119,6 +160,10 @@ export default function Index() {
           description: "We'll be in touch within 24 hours." 
         });
         e.currentTarget.reset();
+        setName("");
+        setEmail("");
+        setPhoneCountryCode("");
+        setPhoneNumber("");
         setCallDate(undefined);
       }
     } catch (error) {
@@ -379,11 +424,56 @@ export default function Index() {
                   <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                     <div>
                       <Label htmlFor="name">Name</Label>
-                      <Input id="name" name="name" required placeholder="Jane Smith" />
+                      <Input
+                        id="name"
+                        name="name"
+                        required
+                        placeholder="Jane Smith"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                      />
                     </div>
                     <div>
                       <Label htmlFor="email">Email</Label>
-                      <Input id="email" name="email" type="email" required placeholder="jane@email.com" />
+                      <Input
+                        id="email"
+                        name="email"
+                        type="email"
+                        required
+                        placeholder="jane@email.com"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <div>
+                      <Label htmlFor="phone-country-code">Phone country code</Label>
+                      <Select name="phoneCountryCode" value={phoneCountryCode} onValueChange={setPhoneCountryCode}>
+                        <SelectTrigger id="phone-country-code" aria-label="Phone country code">
+                          <SelectValue placeholder="Select code" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {phoneCountryCodes.map((code) => (
+                            <SelectItem key={code.label} value={code.value}>{code.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="phone-number">Phone number</Label>
+                      <Input
+                        id="phone-number"
+                        name="phoneNumber"
+                        type="tel"
+                        inputMode="tel"
+                        autoComplete="tel-national"
+                        required
+                        placeholder="e.g. 9876543210"
+                        value={phoneNumber}
+                        onChange={(e) => setPhoneNumber(e.target.value)}
+                      />
                     </div>
                   </div>
 
@@ -493,7 +583,7 @@ export default function Index() {
                   </div>
 
                   <div>
-                    <Button size="lg" type="submit" disabled={isSubmitting}>
+                    <Button size="lg" type="submit" disabled={isSubmitting || !isContactInfoComplete}>
                       {isSubmitting ? "Sending..." : "Book a Free 30-Min Call"}
                     </Button>
                   </div>
