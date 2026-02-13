@@ -66,16 +66,6 @@ export default function Index() {
     return slots;
   }, []);
 
-  // Quick time selection helpers
-  const selectTimeRange = (range: 'morning' | 'afternoon' | 'evening') => {
-    const rangeMap = {
-      morning: '09:00',
-      afternoon: '13:00',
-      evening: '17:00'
-    };
-    setCallTime(rangeMap[range]);
-  };
-
   // Format timezone for display
   const timezoneDisplay = useMemo(() => {
     try {
@@ -545,35 +535,6 @@ export default function Index() {
                       <p className="mt-1.5 text-xs text-muted-foreground">
                         Times shown in your local timezone ({timezoneDisplay})
                       </p>
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => selectTimeRange('morning')}
-                          className="text-xs h-7"
-                        >
-                          Morning (9–12)
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => selectTimeRange('afternoon')}
-                          className="text-xs h-7"
-                        >
-                          Afternoon (12–4)
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => selectTimeRange('evening')}
-                          className="text-xs h-7"
-                        >
-                          Evening (4–7)
-                        </Button>
-                      </div>
                     </div>
                   </div>
 
